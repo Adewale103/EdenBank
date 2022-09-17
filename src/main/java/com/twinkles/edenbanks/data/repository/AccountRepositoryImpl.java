@@ -8,11 +8,11 @@ import java.util.Map;
 
 @Repository
 public class AccountRepositoryImpl implements AccountRepository{
-    private final Map<String, Account> accounts = new HashMap<>();
+    private static final Map<String, Account> accounts = new HashMap<>();
     @Override
     public Account save(Account account) {
         if(accounts.containsKey(account.getAccountNumber())){
-            accounts.replace(account.getAccountNumber(),account,account);
+            accounts.replace(account.getAccountNumber(),accounts.get(account.getAccountNumber()),account);
         }
         else{
             accounts.put(account.getAccountNumber(),account);}
