@@ -56,12 +56,6 @@ public class AccountServiceImpl implements AccountService{
                 .build();
     }
 
-    private void checkThatAccountExist(Account foundAccount) {
-        if(foundAccount == null){
-            throw new AccountNotFoundException("Account not found!", 404);
-        }
-    }
-
     @Override
     public List<TransactionResponseDto> getAccountStatement(String accountNumber) {
         Account foundAccount = accountRepository.findAccountByAccountNumber(accountNumber);
@@ -77,7 +71,8 @@ public class AccountServiceImpl implements AccountService{
         validateDeposit(depositRequest);
         BigDecimal balance = foundAccount.getAccountBalance().add(BigDecimal.valueOf(depositRequest.getAmount()));
         foundAccount.setAccountBalance(balance);
-        createTransaction(depositRequest, balance);
+        Transaction createdTransaction = createDepositTransaction(depositRequest, balance, foundAccount);
+        foundAccount.getTransactions().add(createdTransaction);
         accountRepository.save(foundAccount);
         return ApiResponse.builder()
                 .successful(true)
@@ -86,14 +81,26 @@ public class AccountServiceImpl implements AccountService{
                 .build();
 
     }
+    @Override
+    public int size() {
+        return accountRepository.size();
+    }
 
-    private void createTransaction(DepositRequest depositRequest, BigDecimal balance) {
+    private void checkThatAccountExist(Account foundAccount) {
+        if(foundAccount == null){
+            throw new AccountNotFoundException("Account not found!", 404);
+        }
+    }
+
+    private Transaction createDepositTransaction(DepositRequest depositRequest, BigDecimal balance, Account account) {
         Transaction transaction = new Transaction();
+        transaction.setId(generateTransactionId(account));
         transaction.setTransactionDate(LocalDateTime.now());
         transaction.setAmount(BigDecimal.valueOf(depositRequest.getAmount()));
         transaction.setBalanceAfterTransaction(balance);
         transaction.setTransactionType(TransactionType.CREDIT);
         transaction.setNarration("Deposit of "+ depositRequest.getAmount()+" was made into "+ depositRequest.getAccountNumber());
+        return transaction;
     }
 
     private TransactionResponseDto buildTransactionResponseDto(Transaction transaction) {
@@ -102,20 +109,13 @@ public class AccountServiceImpl implements AccountService{
                 .amount(transaction.getAmount().doubleValue()).narration(transaction.getNarration()).build();
     }
 
-    @Override
-    public int size() {
-        return accountRepository.size();
-    }
-
-
-
     private Account buildAccountFrom(CreateAccountRequest createAccountRequest) {
         return Account.builder()
                 .accountName(createAccountRequest.getAccountName())
                 .accountBalance(BigDecimal.valueOf(createAccountRequest.getInitialDeposit()))
                 .accountNumber(generateAccountNumber())
                 .accountPassword(createAccountRequest.getAccountPassword())
-                .id(generateId())
+                .id(generateAccountId())
                 .transactions(new ArrayList<>())
                 .build();
     }
@@ -139,8 +139,11 @@ public class AccountServiceImpl implements AccountService{
     private String generateAccountNumber(){
         return UUID.randomUUID().toString().substring(0,10);
     }
-    private String generateId(){
+    private String generateAccountId(){
         return String.valueOf(accountRepository.size());
+    }
+    private String generateTransactionId(Account account){
+        return String.valueOf(account.getTransactions().size());
     }
     private String formatDateToString(LocalDateTime date){
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("E, dd-MM-yyyy, hh-mm-ss, a");
