@@ -5,13 +5,11 @@ import com.twinkles.edenbanks.data.model.User;
 import com.twinkles.edenbanks.data.model.enums.RoleType;
 import com.twinkles.edenbanks.data.repository.UserRepository;
 import com.twinkles.edenbanks.dtos.requests.CreateAccountRequest;
-import com.twinkles.edenbanks.dtos.requests.LoginRequest;
 import com.twinkles.edenbanks.dtos.requests.RegisterUserRequest;
 import com.twinkles.edenbanks.dtos.responses.ApiResponse;
-import com.twinkles.edenbanks.dtos.responses.LoginResponse;
 import com.twinkles.edenbanks.exceptions.UserAlreadyExistException;
 import com.twinkles.edenbanks.exceptions.UserNotFoundException;
-import com.twinkles.edenbanks.security.jwt.TokenProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,16 +24,16 @@ import java.util.stream.Collectors;
 
 
 @Service
+@Slf4j
 public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserRepository userRepository;
+    private static int userIdCounter;
     private final AccountService accountService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    private final TokenProvider tokenProvider;
 
     public UserServiceImpl(UserRepository userRepository, AccountService accountService, BCryptPasswordEncoder bCryptPasswordEncoder) {
         this.userRepository = userRepository;
         this.accountService = accountService;
-        this.tokenProvider = tokenProvider;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
 
     }
@@ -53,6 +51,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         User user = new User(registerUserRequest.getFirstName(), registerUserRequest.getLastName(), registerUserRequest.getEmail(), account);
         user.setId(generateUserId());
         userRepository.save(user);
+        log.info(user.getAccount().getAccountNumber());
         return ApiResponse.builder()
                 .successful(true)
                 .message("User successfully registered!")
@@ -62,13 +61,15 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public LoginResponse Login(LoginRequest loginRequest) {
-        return null;
+    public User findUserByAccountNumber(String accountNumber) {
+        User user = userRepository.findUserByAccountNumber(accountNumber);
+        validateThatUserExist(accountNumber);
+        return user;
     }
 
 
     private String generateUserId() {
-        return String.valueOf(userRepository.size());
+        return String.valueOf(++userIdCounter);
     }
 
     private void validateThatUserDoesNotExist(String email) {

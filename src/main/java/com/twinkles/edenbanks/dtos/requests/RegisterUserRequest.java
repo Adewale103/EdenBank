@@ -12,5 +12,5 @@ public class RegisterUserRequest {
     private String lastName;
     private String email;
     private String accountPassword;
-    private double InitialDeposit;
+    private double initialDeposit;
 }

@@ -44,5 +44,13 @@ public class GlobalExceptionHandler {
                 statusCode(400).
                 successful(false).build(), HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(UserAlreadyExistException.class)
+    public ResponseEntity<?> handleUserAlreadyExistException(UserAlreadyExistException userAlreadyExistException){
+        return new ResponseEntity<>(ApiResponse.builder().
+                message(userAlreadyExistException.getMessage()).
+                statusCode(400).
+                successful(false).build(), HttpStatus.BAD_REQUEST);
+    }
 }
 

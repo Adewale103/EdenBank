@@ -11,10 +11,12 @@ import com.twinkles.edenbanks.dtos.responses.ApiResponse;
 import com.twinkles.edenbanks.dtos.responses.GetAccountInfoResponse;
 import com.twinkles.edenbanks.dtos.responses.TransactionResponseDto;
 import com.twinkles.edenbanks.exceptions.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -23,8 +25,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class AccountServiceImpl implements AccountService{
     private final AccountRepository accountRepository;
+    private static int accountIdCounter;
+    private static int transactionIdCounter;
+    private SecureRandom secureRandom = new SecureRandom();
 
     @Autowired
     public AccountServiceImpl(AccountRepository accountRepository) {
@@ -34,6 +40,7 @@ public class AccountServiceImpl implements AccountService{
     @Override
     public ApiResponse createAccount(CreateAccountRequest createAccountRequest) {
         validateThatAccountDoesNotExist(createAccountRequest);
+        log.info("initial amount -> {}",createAccountRequest.getInitialDeposit());
         validateInitialDeposit(createAccountRequest);
         Account createdAccount = buildAccountFrom(createAccountRequest);
         accountRepository.save(createdAccount);
@@ -42,7 +49,6 @@ public class AccountServiceImpl implements AccountService{
                 .statusCode(200)
                 .successful(true)
                 .build();
-
     }
 
     @Override
@@ -122,7 +128,7 @@ public class AccountServiceImpl implements AccountService{
 
     private Transaction createDepositTransaction(DepositRequest depositRequest, BigDecimal balance, Account account) {
         Transaction transaction = new Transaction();
-        transaction.setId(generateTransactionId(account));
+        transaction.setId(generateTransactionId());
         transaction.setTransactionDate(LocalDateTime.now());
         transaction.setAmount(BigDecimal.valueOf(depositRequest.getAmount()));
         transaction.setBalanceAfterTransaction(balance);
@@ -133,7 +139,7 @@ public class AccountServiceImpl implements AccountService{
 
     private Transaction createWithdrawalTransaction(WithdrawRequest withdrawRequest, BigDecimal balance, Account account) {
         Transaction transaction = new Transaction();
-        transaction.setId(generateTransactionId(account));
+        transaction.setId(generateTransactionId());
         transaction.setTransactionDate(LocalDateTime.now());
         transaction.setAmount(BigDecimal.valueOf(withdrawRequest.getWithdrawAmount()));
         transaction.setBalanceAfterTransaction(balance);
@@ -166,7 +172,7 @@ public class AccountServiceImpl implements AccountService{
     }
     private void validateInitialDeposit(CreateAccountRequest createAccountRequest) {
         if(createAccountRequest.getInitialDeposit() < 500 || createAccountRequest.getInitialDeposit() >= 1000000) {
-            throw new DepositNotValidException(createAccountRequest.getInitialDeposit() + "is not within the amount that can be deposited", 400);
+            throw new DepositNotValidException(createAccountRequest.getInitialDeposit() + " is not within the amount that can be deposited", 400);
         }
     }
 
@@ -176,13 +182,13 @@ public class AccountServiceImpl implements AccountService{
         }
     }
     private String generateAccountNumber(){
-        return UUID.randomUUID().toString().substring(0,10);
+        return String.valueOf(secureRandom.nextInt(1234556781));
     }
     private String generateAccountId(){
-        return String.valueOf(accountRepository.size());
+        return String.valueOf(++accountIdCounter);
     }
-    private String generateTransactionId(Account account){
-        return String.valueOf(account.getTransactions().size());
+    private String generateTransactionId(){
+        return String.valueOf(++transactionIdCounter);
     }
     private String formatDateToString(LocalDateTime date){
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("E, dd-MM-yyyy, hh-mm-ss, a");

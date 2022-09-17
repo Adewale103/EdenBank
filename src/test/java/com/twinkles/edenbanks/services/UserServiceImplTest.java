@@ -13,7 +13,7 @@ import com.twinkles.edenbanks.dtos.responses.ApiResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.authentication.AuthenticationManager;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,7 +37,7 @@ class UserServiceImplTest {
                 .firstName("Adewale")
                 .lastName("Adeyinka")
                 .email("adeyinka@gmail.com")
-                .InitialDeposit(6700)
+                .initialDeposit(6700)
                 .accountPassword("1234")
                 .build();
         apiResponse = userService.registerUserAccount(registerUserRequest);
