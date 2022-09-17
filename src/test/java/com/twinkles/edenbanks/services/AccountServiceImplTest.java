@@ -9,6 +9,7 @@ import com.twinkles.edenbanks.dtos.requests.WithdrawRequest;
 import com.twinkles.edenbanks.dtos.responses.ApiResponse;
 import com.twinkles.edenbanks.dtos.responses.GetAccountInfoResponse;
 import com.twinkles.edenbanks.dtos.responses.TransactionResponseDto;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,7 +33,7 @@ class AccountServiceImplTest {
                 .accountPassword("1234")
                 .InitialDeposit(6700)
                 .build();
-         apiResponse = accountService.createAccount(createAccountRequest);
+        apiResponse = accountService.createAccount(createAccountRequest);
 
         Account account = accountRepository.findAccountByAccountName("Adewale Adeyinka");
         depositRequest = DepositRequest.builder()
@@ -44,6 +45,11 @@ class AccountServiceImplTest {
                 .withdrawAmount(1000)
                 .password("1234")
                 .build();
+    }
+
+    @AfterEach
+    public void tearDown(){
+        accountRepository.clear();
     }
     @Test
     public void createAccountRequest(){
@@ -76,3 +82,4 @@ class AccountServiceImplTest {
         assertEquals(200, apiResponse.getStatusCode());
     }
 }
+

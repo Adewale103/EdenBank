@@ -1,5 +1,6 @@
 package com.twinkles.edenbanks.services;
 
+import com.twinkles.edenbanks.data.model.Account;
 import com.twinkles.edenbanks.dtos.requests.CreateAccountRequest;
 import com.twinkles.edenbanks.dtos.requests.DepositRequest;
 import com.twinkles.edenbanks.dtos.requests.WithdrawRequest;
@@ -18,4 +19,5 @@ public interface AccountService {
     ApiResponse deposit(DepositRequest depositRequest);
 
     ApiResponse withdraw(WithdrawRequest withdrawRequest);
+    Account findAccountByAccountName(String accountName);
 }

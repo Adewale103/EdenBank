@@ -24,23 +24,20 @@ class UserRepositoryImplTest {
 
     @BeforeEach
     void setUp() {
-        user1 = new User("Adewale", "Adeyinka", "Adeyinka@gmmail.com", "09082367383");
-        account1 = new Account(user1.getFirstName()+" "+user1.getLastName(),"1234567890", BigDecimal.valueOf(2300),"1234");
-        account2 = new Account(user1.getFirstName()+" "+user1.getLastName(),"98765567890", BigDecimal.valueOf(5200),"1234");
-        user1.getAccounts().add(account1);
-        user1.getAccounts().add(account2);
+        account1 = new Account("Adewale Adeyinka","1234567890", BigDecimal.valueOf(2300),"1234");
+        user1 = new User("Adewale", "Adeyinka", "Adeyinka@gmmail.com",account1);
         userRepository.save(user1);
+
     }
 
     @Test
     public void createUserTest(){
         assertEquals(1, userRepository.size());
-        assertEquals(2,user1.getAccounts().size());
     }
 
     @Test
-    public void findUserByAccountTest(){
-        User user = userRepository.findUserByAccount(account1);
+    public void findUserByAccountNameTest(){
+        User user = userRepository.findUserByAccountName("Adewale Adeyinka");
         assertEquals(user, user1);
     }
 

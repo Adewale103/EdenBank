@@ -11,6 +11,7 @@ import com.twinkles.edenbanks.dtos.responses.ApiResponse;
 import com.twinkles.edenbanks.dtos.responses.GetAccountInfoResponse;
 import com.twinkles.edenbanks.dtos.responses.TransactionResponseDto;
 import com.twinkles.edenbanks.exceptions.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 public class AccountServiceImpl implements AccountService{
     private final AccountRepository accountRepository;
 
+    @Autowired
     public AccountServiceImpl(AccountRepository accountRepository) {
         this.accountRepository = accountRepository;
     }
@@ -97,6 +99,13 @@ public class AccountServiceImpl implements AccountService{
                 .statusCode(200)
                 .build();
 
+    }
+
+    @Override
+    public Account findAccountByAccountName(String accountName) {
+        Account account = accountRepository.findAccountByAccountName(accountName);
+        checkThatAccountExist(account);
+        return account;
     }
 
 

@@ -9,5 +9,6 @@ public interface AccountRepository {
     Account findAccountByAccountNumber(String accountNumber);
     void deleteAccount(Account account);
     int size();
+    void clear();
 
 }

@@ -1,6 +1,5 @@
 package com.twinkles.edenbanks.data.repository;
 
-import com.twinkles.edenbanks.data.model.Account;
 import com.twinkles.edenbanks.data.model.User;
 import org.springframework.stereotype.Repository;
 
@@ -22,10 +21,20 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public User findUserByAccount(Account account) {
+    public User findUserByAccountName(String accountName) {
 
         for(Map.Entry<String, User> userEntry : users.entrySet()){
-            if(userEntry.getValue().getAccounts().contains(account)){
+            if(userEntry.getValue().getAccount().getAccountName().equals(accountName)){
+                return userEntry.getValue();
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public User findUserByAccountNumber(String accountNumber) {
+        for(Map.Entry<String, User> userEntry : users.entrySet()){
+            if(userEntry.getValue().getAccount().getAccountNumber().equals(accountNumber)){
                 return userEntry.getValue();
             }
         }
@@ -37,6 +46,16 @@ public class UserRepositoryImpl implements UserRepository {
         if(users.containsValue(user)){
             users.remove(user.getId());
         }
+    }
+
+    @Override
+    public User findUserByEmailAddress(String emailAddress) {
+        for(Map.Entry<String, User> entryMap : users.entrySet()){
+            if(entryMap.getValue().getEmail().equals(emailAddress)){
+                return entryMap.getValue();
+            }
+        }
+        return null;
     }
 
     @Override

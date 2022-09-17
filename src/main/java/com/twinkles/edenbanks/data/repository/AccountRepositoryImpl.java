@@ -48,4 +48,9 @@ public class AccountRepositoryImpl implements AccountRepository{
     public int size() {
         return accounts.size();
     }
+
+    @Override
+    public void clear() {
+        accounts.clear();
+    }
 }
