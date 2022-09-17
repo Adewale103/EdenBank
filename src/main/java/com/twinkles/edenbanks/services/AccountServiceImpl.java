@@ -6,12 +6,11 @@ import com.twinkles.edenbanks.data.model.enums.TransactionType;
 import com.twinkles.edenbanks.data.repository.AccountRepository;
 import com.twinkles.edenbanks.dtos.requests.CreateAccountRequest;
 import com.twinkles.edenbanks.dtos.requests.DepositRequest;
+import com.twinkles.edenbanks.dtos.requests.WithdrawRequest;
 import com.twinkles.edenbanks.dtos.responses.ApiResponse;
 import com.twinkles.edenbanks.dtos.responses.GetAccountInfoResponse;
 import com.twinkles.edenbanks.dtos.responses.TransactionResponseDto;
-import com.twinkles.edenbanks.exceptions.AccountAlreadyExistException;
-import com.twinkles.edenbanks.exceptions.AccountNotFoundException;
-import com.twinkles.edenbanks.exceptions.InitialDepositNotValidException;
+import com.twinkles.edenbanks.exceptions.*;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -71,8 +70,8 @@ public class AccountServiceImpl implements AccountService{
         validateDeposit(depositRequest);
         BigDecimal balance = foundAccount.getAccountBalance().add(BigDecimal.valueOf(depositRequest.getAmount()));
         foundAccount.setAccountBalance(balance);
-        Transaction createdTransaction = createDepositTransaction(depositRequest, balance, foundAccount);
-        foundAccount.getTransactions().add(createdTransaction);
+        Transaction creditTransaction = createDepositTransaction(depositRequest, balance, foundAccount);
+        foundAccount.getTransactions().add(creditTransaction);
         accountRepository.save(foundAccount);
         return ApiResponse.builder()
                 .successful(true)
@@ -81,6 +80,26 @@ public class AccountServiceImpl implements AccountService{
                 .build();
 
     }
+
+    @Override
+    public ApiResponse withdraw(WithdrawRequest withdrawRequest) {
+        Account foundAccount = accountRepository.findAccountByAccountNumber(withdrawRequest.getAccountNumber());
+        checkThatAccountExist(foundAccount);
+        validateWithdrawal(withdrawRequest, foundAccount);
+        BigDecimal balance = foundAccount.getAccountBalance().subtract(BigDecimal.valueOf(withdrawRequest.getWithdrawAmount()));
+        foundAccount.setAccountBalance(balance);
+        Transaction debitTransaction = createWithdrawalTransaction(withdrawRequest, balance, foundAccount);
+        foundAccount.getTransactions().add(debitTransaction);
+        accountRepository.save(foundAccount);
+        return ApiResponse.builder()
+                .successful(true)
+                .message("Withdrawal request was successful!")
+                .statusCode(200)
+                .build();
+
+    }
+
+
     @Override
     public int size() {
         return accountRepository.size();
@@ -100,6 +119,17 @@ public class AccountServiceImpl implements AccountService{
         transaction.setBalanceAfterTransaction(balance);
         transaction.setTransactionType(TransactionType.CREDIT);
         transaction.setNarration("Deposit of "+ depositRequest.getAmount()+" was made into "+ depositRequest.getAccountNumber());
+        return transaction;
+    }
+
+    private Transaction createWithdrawalTransaction(WithdrawRequest withdrawRequest, BigDecimal balance, Account account) {
+        Transaction transaction = new Transaction();
+        transaction.setId(generateTransactionId(account));
+        transaction.setTransactionDate(LocalDateTime.now());
+        transaction.setAmount(BigDecimal.valueOf(withdrawRequest.getWithdrawAmount()));
+        transaction.setBalanceAfterTransaction(balance);
+        transaction.setTransactionType(TransactionType.DEBIT);
+        transaction.setNarration("Withdrawal of "+ withdrawRequest.getAccountNumber()+" was made from your account");
         return transaction;
     }
 
@@ -127,13 +157,13 @@ public class AccountServiceImpl implements AccountService{
     }
     private void validateInitialDeposit(CreateAccountRequest createAccountRequest) {
         if(createAccountRequest.getInitialDeposit() < 500 || createAccountRequest.getInitialDeposit() >= 1000000) {
-            throw new InitialDepositNotValidException(createAccountRequest.getInitialDeposit() + "is not within the amount that can be deposited", 400);
+            throw new DepositNotValidException(createAccountRequest.getInitialDeposit() + "is not within the amount that can be deposited", 400);
         }
     }
 
     private void validateDeposit(DepositRequest depositRequest) {
         if(depositRequest.getAmount() < 1 || depositRequest.getAmount() > 1000000) {
-            throw new InitialDepositNotValidException(depositRequest.getAmount() + "is not within the amount that can be deposited", 400);
+            throw new DepositNotValidException(depositRequest.getAmount() + "is not within the amount that can be deposited", 400);
         }
     }
     private String generateAccountNumber(){
@@ -148,5 +178,13 @@ public class AccountServiceImpl implements AccountService{
     private String formatDateToString(LocalDateTime date){
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("E, dd-MM-yyyy, hh-mm-ss, a");
         return dateTimeFormatter.format(date);
+    }
+    private void validateWithdrawal(WithdrawRequest withdrawRequest, Account account) {
+        if(!account.getAccountPassword().equals(withdrawRequest.getPassword())){
+            throw new IncorrectPasswordException("Password is incorrect", 400);
+        }
+        if(account.getAccountBalance().doubleValue() - withdrawRequest.getWithdrawAmount() < 500){
+            throw new InsufficientBalanceException("You do not have sufficient balance",400);
+        }
     }
 }

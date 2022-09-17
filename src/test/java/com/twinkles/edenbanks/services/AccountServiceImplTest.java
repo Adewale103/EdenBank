@@ -5,6 +5,7 @@ import com.twinkles.edenbanks.data.repository.AccountRepository;
 import com.twinkles.edenbanks.data.repository.AccountRepositoryImpl;
 import com.twinkles.edenbanks.dtos.requests.CreateAccountRequest;
 import com.twinkles.edenbanks.dtos.requests.DepositRequest;
+import com.twinkles.edenbanks.dtos.requests.WithdrawRequest;
 import com.twinkles.edenbanks.dtos.responses.ApiResponse;
 import com.twinkles.edenbanks.dtos.responses.GetAccountInfoResponse;
 import com.twinkles.edenbanks.dtos.responses.TransactionResponseDto;
@@ -21,6 +22,7 @@ class AccountServiceImplTest {
     private final AccountRepository accountRepository = new AccountRepositoryImpl();
     private final AccountService accountService = new AccountServiceImpl(accountRepository);
     private DepositRequest depositRequest;
+    private WithdrawRequest withdrawRequest;
     private ApiResponse apiResponse;
 
     @BeforeEach
@@ -36,6 +38,11 @@ class AccountServiceImplTest {
         depositRequest = DepositRequest.builder()
                 .accountNumber(account.getAccountNumber())
                 .amount(4242)
+                .build();
+        withdrawRequest = WithdrawRequest.builder()
+                .accountNumber(account.getAccountNumber())
+                .withdrawAmount(1000)
+                .password("1234")
                 .build();
     }
     @Test
@@ -62,6 +69,10 @@ class AccountServiceImplTest {
     public void accountCanDepositTest(){
         ApiResponse apiResponse = accountService.deposit(depositRequest);
         assertEquals(200, apiResponse.getStatusCode());
-
+    }
+    @Test
+    public void accountCanWithdrawTest(){
+        ApiResponse apiResponse = accountService.withdraw(withdrawRequest);
+        assertEquals(200, apiResponse.getStatusCode());
     }
 }
